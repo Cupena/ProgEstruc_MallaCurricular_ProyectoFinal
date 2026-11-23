@@ -1,5 +1,6 @@
 import json
 import os
+from GrafoMaterias import crear_grafo, pendientes_grafo
 
 CARPETA = os.path.dirname(os.path.abspath(__file__))
 CARPETA_PLANES = os.path.join(CARPETA, 'planes_estudio')
@@ -93,7 +94,9 @@ def requisitos(materia):
 
 
 def pendientes(materia):
-    return [codigo for codigo in requisitos(materia) if not aprobada(codigo)]
+    # Grafo dirigido: cada nodo almacena sus prerrequisitos.
+    grafo = crear_grafo(materias(carrera_actual()))
+    return pendientes_grafo(grafo, str(materia['codigo']), datos['aprobadas'])
 
 
 def estado(materia):
