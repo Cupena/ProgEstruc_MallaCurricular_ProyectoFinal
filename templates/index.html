@@ -1,0 +1,105 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>Ruta Académica</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        h1 {
+            color: #183b70;
+        }
+
+        .contenedor {
+            background: white;
+            padding: 35px;
+            border-radius: 15px;
+            max-width: 650px;
+            margin: auto;
+            box-shadow: 0 4px 15px #00000015;
+        }
+    </style>
+</head>
+<body>
+    <div class="contenedor">
+        <h1>Ruta Académica UAM</h1>
+        <h2>Ingeniería de Sistemas</h2>
+        <p>Conexión entre Flask y HTML funcionando.</p>
+
+        <button onclick="cargarMaterias()">
+            Mostrar materias
+        </button>
+
+        <div id="resultado"></div>
+    </div>
+
+    <script>
+        async function cargarMaterias() {
+            const resultado =
+                document.getElementById("resultado");
+
+            try {
+                const respuesta =
+                    await fetch("/api/planes");
+
+                if (!respuesta.ok) {
+                    throw new Error("Error del servidor");
+                }
+
+                const planes = await respuesta.json();
+
+                resultado.innerHTML = "";
+
+                planes.forEach(plan => {
+                    const titulo =
+                        document.createElement("h3");
+
+                    titulo.textContent = plan.nombre;
+                    resultado.appendChild(titulo);
+
+                    plan.semestres.forEach(
+                        (semestre, indice) => {
+                            const subtitulo =
+                                document.createElement("h4");
+
+                            subtitulo.textContent =
+                                "Semestre " + (indice + 1);
+
+                            resultado.appendChild(subtitulo);
+
+                            semestre.forEach(materia => {
+                                const parrafo =
+                                    document.createElement("p");
+
+                                parrafo.textContent =
+                                    materia.codigo + " - " +
+                                    materia.nombre;
+
+                                resultado.appendChild(parrafo);
+                            });
+                        }
+                    );
+                });
+
+                if (planes.length === 0) {
+                    resultado.textContent =
+                        "No se encontraron carreras.";
+                }
+
+            } catch (error) {
+                resultado.textContent =
+                    "No se pudieron cargar las materias: " +
+                    error.message;
+            }
+        }
+    </script>
+</body>
+</html>
