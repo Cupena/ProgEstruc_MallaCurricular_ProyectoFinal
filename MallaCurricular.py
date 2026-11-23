@@ -1,6 +1,6 @@
 import json
 import os
-from GrafoMaterias import crear_grafo, pendientes_grafo
+from grafoMaterias import crear_grafo, pendientes_grafo
 
 CARPETA = os.path.dirname(os.path.abspath(__file__))
 CARPETA_PLANES = os.path.join(CARPETA, 'planes_estudio')

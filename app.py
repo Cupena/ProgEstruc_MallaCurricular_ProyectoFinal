@@ -1,6 +1,6 @@
 from flask import Flask, render_template, jsonify, request
 import MallaCurricular as m
-from GrafoMaterias import crear_grafo, exportar_grafo, dependientes_bfs, cadena_requisitos_dfs
+from grafoMaterias import crear_grafo, exportar_grafo, dependientes_bfs, cadena_requisitos_dfs
 
 app = Flask(__name__)
 
