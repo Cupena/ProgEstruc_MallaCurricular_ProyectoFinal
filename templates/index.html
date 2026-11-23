@@ -1,105 +1,70 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
-    <title>Ruta Académica</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f9;
-            text-align: center;
-            padding: 60px 20px;
-        }
-
-        h1 {
-            color: #183b70;
-        }
-
-        .contenedor {
-            background: white;
-            padding: 35px;
-            border-radius: 15px;
-            max-width: 650px;
-            margin: auto;
-            box-shadow: 0 4px 15px #00000015;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruta Académica UAM</title>
+<style>
+:root{font-family:Arial,sans-serif;color:#192b49;background:#f2f5fa}*{box-sizing:border-box}body{margin:0}.contenedor{max-width:1100px;margin:35px auto;padding:28px}header{background:white;padding:28px;border-radius:18px;box-shadow:0 5px 20px #12284b0c}h1{margin:0 0 10px;color:#193d79}label{display:block;margin:20px 0 8px;font-weight:700}select{width:100%;max-width:560px;padding:13px;border:1px solid #c9d3e1;border-radius:10px;background:white;font-size:16px}#mensaje{margin-top:12px;color:#b03939}#resumen{margin-top:12px;color:#51627b}.semestres{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px;margin-top:24px}.semestre{background:white;padding:20px;border-radius:15px;box-shadow:0 4px 16px #12284b0c}.semestre h2{margin:0 0 16px;font-size:19px;color:#193d79}.materia{padding:11px 0;border-top:1px solid #e8edf3}.codigo{font-size:12px;color:#65748c}.nombre{font-weight:600;margin:4px 0}.extra{font-size:12px;color:#64748b;line-height:1.5}.vacio{padding:25px;text-align:center;color:#64748b}@media(max-width:600px){.contenedor{margin:0;padding:14px}header{padding:20px}}
+</style>
 </head>
 <body>
-    <div class="contenedor">
-        <h1>Ruta Académica UAM</h1>
-        <h2>Ingeniería de Sistemas</h2>
-        <p>Conexión entre Flask y HTML funcionando.</p>
-
-        <button onclick="cargarMaterias()">
-            Mostrar materias
-        </button>
-
-        <div id="resultado"></div>
-    </div>
-
-    <script>
-        async function cargarMaterias() {
-            const resultado =
-                document.getElementById("resultado");
-
-            try {
-                const respuesta =
-                    await fetch("/api/planes");
-
-                if (!respuesta.ok) {
-                    throw new Error("Error del servidor");
-                }
-
-                const planes = await respuesta.json();
-
-                resultado.innerHTML = "";
-
-                planes.forEach(plan => {
-                    const titulo =
-                        document.createElement("h3");
-
-                    titulo.textContent = plan.nombre;
-                    resultado.appendChild(titulo);
-
-                    plan.semestres.forEach(
-                        (semestre, indice) => {
-                            const subtitulo =
-                                document.createElement("h4");
-
-                            subtitulo.textContent =
-                                "Semestre " + (indice + 1);
-
-                            resultado.appendChild(subtitulo);
-
-                            semestre.forEach(materia => {
-                                const parrafo =
-                                    document.createElement("p");
-
-                                parrafo.textContent =
-                                    materia.codigo + " - " +
-                                    materia.nombre;
-
-                                resultado.appendChild(parrafo);
-                            });
-                        }
-                    );
-                });
-
-                if (planes.length === 0) {
-                    resultado.textContent =
-                        "No se encontraron carreras.";
-                }
-
-            } catch (error) {
-                resultado.textContent =
-                    "No se pudieron cargar las materias: " +
-                    error.message;
-            }
-        }
-    </script>
+<main class="contenedor">
+<header>
+<h1>Ruta Académica UAM</h1>
+<p>Consulta tus planes de estudio por carrera y semestre.</p>
+<label for="carrera">Selecciona tu carrera</label>
+<select id="carrera"><option value="">Cargando carreras...</option></select>
+<div id="resumen" aria-live="polite"></div>
+<div id="mensaje" role="alert"></div>
+</header>
+<section id="semestres" class="semestres" aria-live="polite"></section>
+</main>
+<script>
+const selector=document.getElementById('carrera');
+const contenedor=document.getElementById('semestres');
+const resumen=document.getElementById('resumen');
+const mensaje=document.getElementById('mensaje');
+let planes=[];
+function texto(elemento,contenido){elemento.textContent=contenido==null?'':String(contenido);return elemento;}
+function dibujarCarrera(indice){
+ contenedor.replaceChildren();mensaje.textContent='';
+ const plan=planes[indice];
+ if(!plan){resumen.textContent='Selecciona una carrera válida.';return;}
+ const semestres=Array.isArray(plan.semestres)?plan.semestres:[];
+ const total=semestres.reduce((n,s)=>n+(Array.isArray(s)?s.length:0),0);
+ resumen.textContent=`${semestres.length} semestres · ${total} materias`;
+ if(!semestres.length){contenedor.appendChild(texto(document.createElement('p'),'Este plan no contiene semestres.'));return;}
+ semestres.forEach((semestre,i)=>{
+  const tarjeta=document.createElement('article');tarjeta.className='semestre';
+  tarjeta.appendChild(texto(document.createElement('h2'),`Semestre ${i+1}`));
+  if(!Array.isArray(semestre))return;
+  semestre.forEach(m=>{
+   const item=document.createElement('div');item.className='materia';
+   const codigo=texto(document.createElement('div'),m.codigo||'Sin código');codigo.className='codigo';
+   const nombre=texto(document.createElement('div'),m.nombre||'Sin nombre');nombre.className='nombre';
+   const extra=texto(document.createElement('div'),`${m.creditos??'?'} créditos · Requisitos: ${m.requisitos||'Ninguno'}`);extra.className='extra';
+   item.append(codigo,nombre,extra);tarjeta.appendChild(item);
+  });
+  contenedor.appendChild(tarjeta);
+ });
+}
+async function cargarCarreras(){
+ try{
+  const respuesta=await fetch('/api/planes',{cache:'no-store'});
+  if(!respuesta.ok)throw new Error(`HTTP ${respuesta.status}. Revisa la ruta /api/planes en app.py`);
+  const datos=await respuesta.json();
+  if(!Array.isArray(datos))throw new Error('La API debe devolver una lista de carreras.');
+  planes=datos.filter(p=>p&&typeof p==='object'&&Array.isArray(p.semestres));
+  selector.replaceChildren();
+  if(!planes.length){selector.appendChild(new Option('No hay carreras disponibles',''));mensaje.textContent='Verifica los JSON dentro de planes_estudio.';return;}
+  planes.forEach((p,i)=>selector.appendChild(new Option(p.nombre||`Carrera ${i+1}`,String(i))));
+  dibujarCarrera(0);
+  if(planes.length===1)mensaje.textContent='Solo se encontró una carrera. Comprueba que ambos archivos JSON estén en planes_estudio y que Flask los cargue.';
+ }catch(error){selector.replaceChildren(new Option('No se pudieron cargar las carreras',''));mensaje.textContent=`Error: ${error.message}`;}
+}
+selector.addEventListener('change',()=>dibujarCarrera(Number(selector.value)));
+cargarCarreras();
+</script>
 </body>
 </html>
