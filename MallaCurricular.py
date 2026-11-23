@@ -1,9 +1,8 @@
-
 import json
 import os
 
 CARPETA = os.path.dirname(os.path.abspath(__file__))
-ARCHIVO_PLANES = os.path.join(CARPETA, 'planes_ruta_academica.json')
+CARPETA_PLANES = os.path.join(CARPETA, 'planes_estudio')
 ARCHIVO_DATOS = os.path.join(CARPETA, 'mis_datos_academicos.json')
 
 
@@ -11,8 +10,41 @@ def leer_json(ruta, predeterminado):
     try:
         with open(ruta, 'r', encoding='utf-8') as archivo:
             return json.load(archivo)
-    except (FileNotFoundError, ValueError):
+    except (OSError, ValueError) as error:
+        print('No se pudo leer', os.path.basename(ruta), ':', error)
         return predeterminado
+
+
+def cargar_planes():
+    resultado = []
+    identificadores = set()
+    if not os.path.isdir(CARPETA_PLANES):
+        os.makedirs(CARPETA_PLANES, exist_ok=True)
+        return resultado
+    for nombre in sorted(os.listdir(CARPETA_PLANES)):
+        if not nombre.lower().endswith('.json'):
+            continue
+        ruta = os.path.join(CARPETA_PLANES, nombre)
+        if not os.path.isfile(ruta):
+            continue
+        contenido = leer_json(ruta, [])
+        if isinstance(contenido, dict):
+            contenido = [contenido]
+        if not isinstance(contenido, list):
+            print('Formato incorrecto en:', nombre)
+            continue
+        for plan in contenido:
+            if not isinstance(plan, dict) or not isinstance(plan.get('nombre'), str) or not isinstance(plan.get('semestres'), list):
+                print('Plan inválido en:', nombre)
+                continue
+            identificador = str(plan.get('codigo_plan') or plan.get('plan') or plan['nombre']).strip().upper()
+            if identificador in identificadores:
+                print('Plan duplicado omitido:', plan['nombre'])
+                continue
+            identificadores.add(identificador)
+            plan['_id'] = identificador
+            resultado.append(plan)
+    return resultado
 
 
 def guardar():
@@ -21,19 +53,32 @@ def guardar():
     print('Datos guardados.')
 
 
+def carrera_actual():
+    for plan in planes:
+        if plan['_id'] == datos['carrera_id']:
+            return plan
+    return planes[0]
+
+
 def materias(carrera):
     resultado = []
-    for numero, semestre in enumerate(planes[carrera]['semestres'], 1):
+    for numero, semestre in enumerate(carrera['semestres'], 1):
+        if not isinstance(semestre, list):
+            continue
         for materia in semestre:
+            if not isinstance(materia, dict) or not materia.get('codigo'):
+                continue
             item = materia.copy()
             item['semestre'] = numero
             resultado.append(item)
     return resultado
 
 
-def buscar(codigo, carrera):
+def buscar(codigo, carrera=None):
+    if carrera is None:
+        carrera = carrera_actual()
     for materia in materias(carrera):
-        if materia['codigo'].upper() == codigo.upper():
+        if str(materia['codigo']).upper() == codigo.upper():
             return materia
     return None
 
@@ -43,8 +88,8 @@ def aprobada(codigo):
 
 
 def requisitos(materia):
-    texto = materia['requisitos'].strip()
-    return [x.strip() for x in texto.split(',') if x.strip()]
+    texto = str(materia.get('requisitos', '') or '').strip()
+    return [x.strip().upper() for x in texto.split(',') if x.strip()]
 
 
 def pendientes(materia):
@@ -52,7 +97,7 @@ def pendientes(materia):
 
 
 def estado(materia):
-    if aprobada(materia['codigo']):
+    if aprobada(str(materia['codigo'])):
         return 'APROBADA'
     if pendientes(materia):
         return 'BLOQUEADA'
@@ -66,15 +111,16 @@ def elegir_carrera():
     try:
         numero = int(input('Selecciona una carrera: ')) - 1
         if 0 <= numero < len(planes):
-            datos['carrera'] = numero
+            datos['carrera_id'] = planes[numero]['_id']
             guardar()
+        else:
+            print('Opción fuera de rango.')
     except ValueError:
         print('Debes escribir un número.')
 
 
 def mostrar_malla():
-    carrera = datos['carrera']
-    for numero, semestre in enumerate(planes[carrera]['semestres'], 1):
+    for numero, semestre in enumerate(carrera_actual()['semestres'], 1):
         print('\n--- SEMESTRE', numero, '---')
         for m in semestre:
             print(m['codigo'], '-', m['nombre'], '|', estado(m))
@@ -82,19 +128,19 @@ def mostrar_malla():
 
 def detalle():
     codigo = input('Código de la materia: ').strip().upper()
-    m = buscar(codigo, datos['carrera'])
+    m = buscar(codigo)
     if not m:
         print('No se encontró esa materia en la carrera seleccionada.')
         return
     print('\nMateria:', m['nombre'])
     print('Código:', m['codigo'])
     print('Semestre:', m['semestre'])
-    print('Créditos:', m['creditos'])
+    print('Créditos:', m.get('creditos', 0))
     print('Estado:', estado(m))
     if requisitos(m):
         print('Prerrequisitos:')
         for req in requisitos(m):
-            original = buscar(req, datos['carrera'])
+            original = buscar(req)
             nombre = original['nombre'] if original else req
             print(' -', nombre, ':', 'Aprobado' if aprobada(req) else 'Pendiente')
     else:
@@ -105,7 +151,7 @@ def detalle():
 
 def marcar_aprobada():
     codigo = input('Código de la materia: ').strip().upper()
-    m = buscar(codigo, datos['carrera'])
+    m = buscar(codigo)
     if not m:
         print('No se encontró esa materia.')
         return
@@ -121,7 +167,7 @@ def marcar_aprobada():
 
 def registrar_notas():
     codigo = input('Código de la materia: ').strip().upper()
-    m = buscar(codigo, datos['carrera'])
+    m = buscar(codigo)
     if not m:
         print('Materia no encontrada.')
         return
@@ -152,12 +198,12 @@ def registrar_notas():
 
 
 def progreso():
-    lista = materias(datos['carrera'])
+    lista = materias(carrera_actual())
     total = len(lista)
-    terminadas = sum(1 for m in lista if aprobada(m['codigo']))
-    creditos = sum(int(m['creditos']) for m in lista)
-    completados = sum(int(m['creditos']) for m in lista if aprobada(m['codigo']))
-    print('\nCarrera:', planes[datos['carrera']]['nombre'])
+    terminadas = sum(1 for m in lista if aprobada(str(m['codigo'])))
+    creditos = sum(int(m.get('creditos', 0)) for m in lista)
+    completados = sum(int(m.get('creditos', 0)) for m in lista if aprobada(str(m['codigo'])))
+    print('\nCarrera:', carrera_actual()['nombre'])
     print('Materias aprobadas:', terminadas, 'de', total)
     print('Materias restantes:', total - terminadas)
     print('Progreso:', round(100 * terminadas / total, 1) if total else 0, '%')
@@ -167,12 +213,12 @@ def progreso():
 
 def recomendar():
     print('\nMATERIAS DISPONIBLES PARA CURSAR')
-    disponibles = [m for m in materias(datos['carrera']) if estado(m) == 'DISPONIBLE']
+    disponibles = [m for m in materias(carrera_actual()) if estado(m) == 'DISPONIBLE']
     disponibles.sort(key=lambda m: m['semestre'])
     if not disponibles:
         print('No hay materias disponibles.')
     for m in disponibles:
-        print(m['codigo'], '-', m['nombre'], '| Semestre', m['semestre'], '|', m['creditos'], 'créditos')
+        print(m['codigo'], '-', m['nombre'], '| Semestre', m['semestre'], '|', m.get('creditos', 0), 'créditos')
     print('Estas son materias elegibles por prerrequisitos, no una matrícula automática.')
 
 
@@ -183,11 +229,13 @@ def horario():
         if op == '0':
             break
         if op == '1':
+            if not datos['horario']:
+                print('No hay clases registradas.')
             for i, clase in enumerate(datos['horario'], 1):
                 print(i, '-', clase['materia'], clase['dia'], clase['hora'], clase['aula'])
         elif op == '2':
             codigo = input('Código de materia: ').upper().strip()
-            if not buscar(codigo, datos['carrera']):
+            if not buscar(codigo):
                 print('Materia no encontrada.')
                 continue
             dia = input('Día: ')
@@ -198,10 +246,15 @@ def horario():
         elif op == '3':
             try:
                 numero = int(input('Número de entrada a eliminar: ')) - 1
-                datos['horario'].pop(numero)
-                guardar()
-            except (ValueError, IndexError):
+                if 0 <= numero < len(datos['horario']):
+                    datos['horario'].pop(numero)
+                    guardar()
+                else:
+                    print('Número incorrecto.')
+            except ValueError:
                 print('Número incorrecto.')
+        else:
+            print('Opción no válida.')
 
 
 def cambiar_minima():
@@ -216,22 +269,29 @@ def cambiar_minima():
         print('Número incorrecto.')
 
 
-planes = leer_json(ARCHIVO_PLANES, [])
-datos = leer_json(ARCHIVO_DATOS, {'carrera': 0, 'aprobadas': [], 'notas': {}, 'horario': [], 'minima': 60})
-for clave, valor in {'carrera': 0, 'aprobadas': [], 'notas': {}, 'horario': [], 'minima': 60}.items():
+planes = cargar_planes()
+predeterminados = {'carrera': 0, 'aprobadas': [], 'notas': {}, 'horario': [], 'minima': 60}
+datos = leer_json(ARCHIVO_DATOS, predeterminados.copy())
+if not isinstance(datos, dict):
+    datos = predeterminados.copy()
+for clave, valor in predeterminados.items():
     if clave not in datos:
         datos[clave] = valor
+if planes:
+    if datos.get('carrera_id') not in [p['_id'] for p in planes]:
+        anterior = datos.get('carrera', 0)
+        if not isinstance(anterior, int) or not 0 <= anterior < len(planes):
+            anterior = 0
+        datos['carrera_id'] = planes[anterior]['_id']
 
 
 def main():
     if not planes:
-        print('Falta el archivo planes_ruta_academica.json en la misma carpeta.')
+        print('No se encontraron planes de estudio válidos en la carpeta planes_estudio.')
         return
-    if not isinstance(datos['carrera'], int) or datos['carrera'] >= len(planes):
-        datos['carrera'] = 0
     while True:
         print('\n========== RUTA ACADÉMICA ==========')
-        print('Carrera:', planes[datos['carrera']]['nombre'])
+        print('Carrera:', carrera_actual()['nombre'])
         print('1. Cambiar carrera')
         print('2. Ver malla curricular')
         print('3. Consultar materia y requisitos')
