@@ -66,3 +66,4 @@ def ordenar_disponibles(grafo, disponibles):
     while not esta_vacia(cola):
         orden.append(desencolar(cola))
     return orden
+#Epaaa
