@@ -1,0 +1,5 @@
+--- Requerimientos ---
+Verificar que reportlab esté instalado:
+    py -c "import reportlab; print('ReportLab instalado correctamente')"
+Si no está instalado ejecute y vuelve a verificar:
+    py -m pip install reportlab
