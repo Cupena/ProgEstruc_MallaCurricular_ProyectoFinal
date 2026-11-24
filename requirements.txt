@@ -1,5 +1,10 @@
 --- Requerimientos ---
 Verificar que reportlab esté instalado:
     py -c "import reportlab; print('ReportLab instalado correctamente')"
-Si no está instalado ejecute y vuelve a verificar:
+Si no está instalado ejecute y vuelva a verificar:
     py -m pip install reportlab
+
+Verificar que flask-corse esté instalado:
+    py -c "import flask_cors; print('Flask-CORS instalado correctamente')"
+Si no está instalado ejecute y vuelva a verificar:
+    py -m pip install flask-cors
