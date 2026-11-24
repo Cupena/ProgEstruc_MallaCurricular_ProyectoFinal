@@ -1,0 +1,2 @@
+Instalar reportlab
+    py -m pip install reportlab

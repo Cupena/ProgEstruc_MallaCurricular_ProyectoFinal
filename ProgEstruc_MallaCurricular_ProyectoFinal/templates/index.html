@@ -1,0 +1,993 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ruta Académica | Malla Curricular</title>
+
+<style>
+:root {
+    --fondo: #f4f7fb;
+    --blanco: #ffffff;
+    --azul: #16365d;
+    --azul-claro: #e8f1ff;
+    --verde: #137a50;
+    --verde-claro: #e0f6e9;
+    --rojo: #b83a4b;
+    --rojo-claro: #fde8ec;
+    --gris: #64748b;
+    --borde: #dce4ef;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: var(--fondo);
+    color: #17263c;
+}
+
+header {
+    background: var(--azul);
+    color: white;
+    padding: 25px 35px;
+}
+
+header h1 {
+    margin: 0 0 7px;
+    font-size: 27px;
+}
+
+header p {
+    margin: 0;
+    color: #dbe8f8;
+}
+
+main {
+    max-width: 1500px;
+    margin: auto;
+    padding: 25px;
+}
+
+.panel {
+    background: white;
+    border: 1px solid var(--borde);
+    border-radius: 15px;
+    padding: 22px;
+    margin-bottom: 22px;
+}
+
+.controles {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+select, input, button {
+    padding: 12px;
+    border-radius: 9px;
+    border: 1px solid var(--borde);
+    font-size: 14px;
+}
+
+select, input {
+    background: white;
+    color: #17263c;
+}
+
+input {
+    flex: 1;
+    min-width: 180px;
+}
+
+button {
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.2s;
+}
+
+button:hover {
+    opacity: 0.88;
+}
+
+.boton-azul {
+    background: var(--azul);
+    color: white;
+    border-color: var(--azul);
+}
+
+.boton-verde {
+    background: var(--verde);
+    color: white;
+    border-color: var(--verde);
+}
+
+.boton-gris {
+    background: #edf2f8;
+    color: #263d59;
+}
+
+.estadisticas {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 15px;
+}
+
+.estadistica {
+    background: white;
+    border: 1px solid var(--borde);
+    border-radius: 13px;
+    padding: 20px;
+}
+
+.estadistica strong {
+    display: block;
+    font-size: 30px;
+    margin-top: 8px;
+    color: var(--azul);
+}
+
+.estadistica span {
+    color: var(--gris);
+    font-size: 13px;
+}
+
+.barra {
+    height: 13px;
+    background: #e5ebf3;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-top: 14px;
+}
+
+.barra > div {
+    height: 100%;
+    width: 0;
+    background: var(--verde);
+    transition: width 0.3s;
+}
+
+.leyenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin: 12px 0;
+    font-size: 13px;
+}
+
+.punto {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.verde { background: var(--verde); }
+.azul { background: #3779d6; }
+.rojo { background: var(--rojo); }
+
+.contenedor-malla {
+    position: relative;
+    overflow: auto;
+    padding: 25px 10px;
+    border: 1px solid var(--borde);
+    border-radius: 12px;
+    background:
+        radial-gradient(#dbe4f0 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+#malla {
+    display: flex;
+    gap: 25px;
+    align-items: flex-start;
+    position: relative;
+    min-width: max-content;
+}
+
+.semestre {
+    width: 230px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+}
+
+.semestre h3 {
+    background: var(--azul);
+    color: white;
+    text-align: center;
+    border-radius: 10px;
+    padding: 13px;
+    margin: 0 0 16px;
+    font-size: 14px;
+}
+
+.materia {
+    position: relative;
+    padding: 14px;
+    margin-bottom: 14px;
+    background: white;
+    border: 2px solid #dce4ef;
+    border-radius: 11px;
+    cursor: pointer;
+    min-height: 105px;
+    box-shadow: 0 3px 8px #17263c0a;
+}
+
+.materia:hover {
+    transform: translateY(-2px);
+}
+
+.materia.aprobada {
+    background: var(--verde-claro);
+    border-color: #57b88c;
+}
+
+.materia.disponible {
+    background: var(--azul-claro);
+    border-color: #81aee9;
+}
+
+.materia.bloqueada {
+    background: var(--rojo-claro);
+    border-color: #e9a0aa;
+}
+
+.materia.seleccionada {
+    outline: 3px solid #e6a73a;
+    outline-offset: 3px;
+}
+
+.materia.atenuada {
+    opacity: 0.28;
+}
+
+.codigo {
+    font-size: 11px;
+    color: var(--gris);
+    margin-bottom: 7px;
+}
+
+.nombre {
+    font-weight: bold;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.estado {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+#conexiones {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    overflow: visible;
+}
+
+.detalle {
+    display: none;
+}
+
+.detalle.visible {
+    display: block;
+}
+
+.detalle h3 {
+    color: var(--azul);
+}
+
+.requisito {
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 8px;
+    background: #f0f4f9;
+}
+
+.mensaje {
+    padding: 13px;
+    border-radius: 9px;
+    background: #edf2f8;
+    color: var(--azul);
+    margin-bottom: 15px;
+}
+
+.error {
+    background: var(--rojo-claro);
+    color: var(--rojo);
+}
+
+@media (max-width: 750px) {
+    main { padding: 12px; }
+    .estadisticas {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    header { padding: 20px; }
+    header h1 { font-size: 22px; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>Ruta Académica UAM</h1>
+    <p>Malla curricular interactiva y análisis de prerrequisitos</p>
+</header>
+
+<main>
+
+<section class="panel">
+    <div class="controles">
+        <select id="carreras" aria-label="Seleccionar carrera">
+            <option value="">Cargando carreras...</option>
+        </select>
+
+        <input
+            id="busqueda"
+            type="search"
+            placeholder="Buscar materia por nombre o código"
+        >
+
+        <button class="boton-azul" onclick="cargarEstado()">
+            Actualizar
+        </button>
+
+        <button class="boton-verde" onclick="exportarPDF()">
+            📄 Exportar informe PDF
+        </button>
+    </div>
+</section>
+
+<div id="mensaje" class="mensaje">
+    Cargando información académica...
+</div>
+
+<section class="estadisticas">
+    <div class="estadistica">
+        <span>Total de materias</span>
+        <strong id="total">0</strong>
+    </div>
+
+    <div class="estadistica">
+        <span>Aprobadas</span>
+        <strong id="aprobadas">0</strong>
+    </div>
+
+    <div class="estadistica">
+        <span>Disponibles</span>
+        <strong id="disponibles">0</strong>
+    </div>
+
+    <div class="estadistica">
+        <span>Bloqueadas</span>
+        <strong id="bloqueadas">0</strong>
+    </div>
+</section>
+
+<section class="panel" style="margin-top:22px">
+    <h2>Progreso académico</h2>
+
+    <p id="textoProgreso">0 % completado</p>
+
+    <div class="barra">
+        <div id="barraProgreso"></div>
+    </div>
+
+    <p id="creditos" style="color:#64748b"></p>
+</section>
+
+<section class="panel">
+    <h2>Esquema de prerrequisitos</h2>
+
+    <p>
+        Selecciona una materia para visualizar sus requisitos
+        y las asignaturas que dependen de ella.
+    </p>
+
+    <div class="leyenda">
+        <span><i class="punto verde"></i>Aprobada</span>
+        <span><i class="punto azul"></i>Disponible</span>
+        <span><i class="punto rojo"></i>Bloqueada</span>
+    </div>
+
+    <div class="controles" style="margin-bottom:16px">
+        <button class="boton-gris" onclick="limpiarSeleccion()">
+            Mostrar todas las conexiones
+        </button>
+    </div>
+
+    <div class="contenedor-malla">
+        <div id="malla">
+            <svg id="conexiones"></svg>
+        </div>
+    </div>
+</section>
+
+<section id="detalle" class="panel detalle">
+    <h3 id="detalleNombre"></h3>
+
+    <p id="detalleEstado"></p>
+
+    <h4>Prerrequisitos</h4>
+    <div id="detalleRequisitos"></div>
+
+    <h4>Materias que dependen de esta</h4>
+    <div id="detalleDependientes"></div>
+
+    <button
+        id="botonAprobar"
+        class="boton-azul"
+        onclick="cambiarAprobacion()"
+    >
+        Marcar como aprobada
+    </button>
+</section>
+
+</main>
+
+<script>
+const API = "http://127.0.0.1:5000/api";
+let datos = null;
+let materias = [];
+let seleccion = null;
+let conexiones = [];
+let materiasPorCodigo = {};
+
+function mostrarMensaje(texto, error = false) {
+    const elemento = document.getElementById("mensaje");
+    elemento.textContent = texto;
+    elemento.className = error ? "mensaje error" : "mensaje";
+}
+
+async function solicitar(ruta, opciones = {}) {
+    const respuesta = await fetch(API + ruta, opciones);
+
+    const tipo = respuesta.headers.get("content-type") || "";
+
+    if (!tipo.includes("application/json")) {
+        throw new Error(
+            "El servidor no devolvió JSON. Comprueba que Flask esté " +
+            "ejecutándose y que Go Live redirija /api al puerto 5000."
+        );
+    }
+
+    const resultado = await respuesta.json();
+
+    if (!respuesta.ok) {
+        throw new Error(
+            resultado.error || "No se pudo completar la solicitud"
+        );
+    }
+
+    return resultado;
+}
+
+function normalizarCodigo(codigo) {
+    return String(codigo || "").trim().toUpperCase();
+}
+
+function obtenerRequisitos(materia) {
+    if (Array.isArray(materia.requisitos_lista)) {
+        return materia.requisitos_lista.map(x =>
+            normalizarCodigo(
+                typeof x === "object" ? x.codigo : x
+            )
+        ).filter(Boolean);
+    }
+
+    if (Array.isArray(materia.requisitos)) {
+        return materia.requisitos.map(x =>
+            normalizarCodigo(
+                typeof x === "object" ? x.codigo : x
+            )
+        ).filter(Boolean);
+    }
+
+    return [];
+}
+
+function nombreMateria(codigo) {
+    const materia = materiasPorCodigo[normalizarCodigo(codigo)];
+    return materia ? materia.nombre : codigo;
+}
+
+function estadoClase(materia) {
+    return String(materia.estado || "").toUpperCase();
+}
+
+async function cargarEstado() {
+    try {
+        mostrarMensaje("Actualizando información...");
+
+        datos = await solicitar("/estado");
+
+        materias = [];
+
+        for (const semestre of datos.semestres || []) {
+            for (const materia of semestre.materias || []) {
+                materias.push({
+                    ...materia,
+                    semestre: Number(
+                        materia.semestre || semestre.numero
+                    )
+                });
+            }
+        }
+
+        materiasPorCodigo = {};
+
+        for (const materia of materias) {
+            materiasPorCodigo[
+                normalizarCodigo(materia.codigo)
+            ] = materia;
+        }
+
+        cargarCarreras();
+        actualizarEstadisticas();
+        crearMalla();
+
+        if (seleccion && materiasPorCodigo[seleccion]) {
+            seleccionarMateria(seleccion);
+        } else {
+            seleccion = null;
+            document.getElementById("detalle")
+                .classList.remove("visible");
+        }
+
+        mostrarMensaje(
+            "Carrera activa: " + datos.carrera.nombre
+        );
+
+    } catch (error) {
+        mostrarMensaje(error.message, true);
+        console.error(error);
+    }
+}
+
+function cargarCarreras() {
+    const select = document.getElementById("carreras");
+
+    select.innerHTML = "";
+
+    for (const carrera of datos.carreras || []) {
+        const opcion = document.createElement("option");
+
+        opcion.value = carrera.id;
+        opcion.textContent = carrera.nombre;
+
+        select.appendChild(opcion);
+    }
+
+    select.value = datos.carrera.id;
+}
+
+document.getElementById("carreras").addEventListener(
+    "change",
+    async function () {
+        try {
+            await solicitar("/carrera", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    id: this.value
+                })
+            });
+
+            seleccion = null;
+            await cargarEstado();
+
+        } catch (error) {
+            mostrarMensaje(error.message, true);
+        }
+    }
+);
+
+function actualizarEstadisticas() {
+    const total = materias.length;
+
+    const aprobadas = materias.filter(
+        x => estadoClase(x) === "APROBADA"
+    ).length;
+
+    const disponibles = materias.filter(
+        x => estadoClase(x) === "DISPONIBLE"
+    ).length;
+
+    const bloqueadas = materias.filter(
+        x => estadoClase(x) === "BLOQUEADA"
+    ).length;
+
+    const porcentaje = total
+        ? (aprobadas / total) * 100
+        : 0;
+
+    document.getElementById("total").textContent = total;
+    document.getElementById("aprobadas").textContent = aprobadas;
+    document.getElementById("disponibles").textContent = disponibles;
+    document.getElementById("bloqueadas").textContent = bloqueadas;
+
+    document.getElementById("textoProgreso").textContent =
+        porcentaje.toFixed(1) + " % completado";
+
+    document.getElementById("barraProgreso").style.width =
+        porcentaje + "%";
+
+    const progreso = datos.progreso || {};
+
+    document.getElementById("creditos").textContent =
+        "Créditos aprobados: " +
+        (progreso.creditos_aprobados || 0) +
+        " / " +
+        (progreso.creditos_total || 0);
+}
+
+function crearMalla() {
+    const contenedor = document.getElementById("malla");
+
+    contenedor.innerHTML =
+        '<svg id="conexiones"></svg>';
+
+    conexiones = [];
+
+    const semestres = datos.semestres || [];
+
+    for (const semestre of semestres) {
+        const columna = document.createElement("div");
+        columna.className = "semestre";
+
+        const titulo = document.createElement("h3");
+        titulo.textContent = "Semestre " + semestre.numero;
+
+        columna.appendChild(titulo);
+
+        for (const materia of semestre.materias || []) {
+            const tarjeta = document.createElement("div");
+
+            const estado = estadoClase(materia);
+            const codigo = normalizarCodigo(materia.codigo);
+
+            tarjeta.className =
+                "materia " + estado.toLowerCase();
+
+            tarjeta.dataset.codigo = codigo;
+
+            const etiquetaCodigo = document.createElement("div");
+            etiquetaCodigo.className = "codigo";
+            etiquetaCodigo.textContent = codigo;
+
+            const nombre = document.createElement("div");
+            nombre.className = "nombre";
+            nombre.textContent = materia.nombre;
+
+            const etiquetaEstado = document.createElement("span");
+            etiquetaEstado.className = "estado";
+            etiquetaEstado.textContent = estado;
+
+            tarjeta.appendChild(etiquetaCodigo);
+            tarjeta.appendChild(nombre);
+            tarjeta.appendChild(etiquetaEstado);
+
+            tarjeta.addEventListener("click", () => {
+                seleccionarMateria(codigo);
+            });
+
+            columna.appendChild(tarjeta);
+
+            for (const requisito of obtenerRequisitos(materia)) {
+                conexiones.push({
+                    origen: requisito,
+                    destino: codigo
+                });
+            }
+        }
+
+        contenedor.appendChild(columna);
+    }
+
+    requestAnimationFrame(dibujarConexiones);
+}
+
+function obtenerTarjeta(codigo) {
+    return [...document.querySelectorAll(".materia")]
+        .find(elemento =>
+            elemento.dataset.codigo === codigo
+        );
+}
+
+function dibujarConexiones() {
+    const svg = document.getElementById("conexiones");
+    const contenedor = document.getElementById("malla");
+
+    if (!svg || !contenedor) return;
+
+    const ancho = contenedor.scrollWidth;
+    const alto = contenedor.scrollHeight;
+
+    svg.setAttribute("width", ancho);
+    svg.setAttribute("height", alto);
+    svg.setAttribute("viewBox", `0 0 ${ancho} ${alto}`);
+
+    svg.innerHTML = `
+        <defs>
+            <marker
+                id="flecha"
+                markerWidth="9"
+                markerHeight="9"
+                refX="8"
+                refY="4.5"
+                orient="auto"
+            >
+                <path d="M0 0 L9 4.5 L0 9 Z"
+                      fill="#91a3bb"/>
+            </marker>
+            <marker
+                id="flechaActiva"
+                markerWidth="9"
+                markerHeight="9"
+                refX="8"
+                refY="4.5"
+                orient="auto"
+            >
+                <path d="M0 0 L9 4.5 L0 9 Z"
+                      fill="#d28a20"/>
+            </marker>
+        </defs>
+    `;
+
+    const base = contenedor.getBoundingClientRect();
+
+    for (const conexion of conexiones) {
+        const origen = obtenerTarjeta(conexion.origen);
+        const destino = obtenerTarjeta(conexion.destino);
+
+        if (!origen || !destino) continue;
+
+        const a = origen.getBoundingClientRect();
+        const b = destino.getBoundingClientRect();
+
+        const x1 = a.right - base.left;
+        const y1 = a.top - base.top + a.height / 2;
+
+        const x2 = b.left - base.left;
+        const y2 = b.top - base.top + b.height / 2;
+
+        const activa = seleccion &&
+            (
+                conexion.origen === seleccion ||
+                conexion.destino === seleccion
+            );
+
+        const camino = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "path"
+        );
+
+        const curva = Math.max(
+            25,
+            Math.abs(x2 - x1) * 0.45
+        );
+
+        camino.setAttribute(
+            "d",
+            `M ${x1} ${y1}
+             C ${x1 + curva} ${y1},
+               ${x2 - curva} ${y2},
+               ${x2} ${y2}`
+        );
+
+        camino.setAttribute("fill", "none");
+        camino.setAttribute(
+            "stroke",
+            activa ? "#d28a20" : "#91a3bb"
+        );
+        camino.setAttribute(
+            "stroke-width",
+            activa ? "3" : "1.5"
+        );
+        camino.setAttribute(
+            "opacity",
+            seleccion && !activa ? "0.12" : "0.85"
+        );
+        camino.setAttribute(
+            "marker-end",
+            activa ? "url(#flechaActiva)" : "url(#flecha)"
+        );
+
+        svg.appendChild(camino);
+    }
+}
+
+function seleccionarMateria(codigo) {
+    seleccion = normalizarCodigo(codigo);
+
+    const materia = materiasPorCodigo[seleccion];
+
+    if (!materia) return;
+
+    const requisitos = obtenerRequisitos(materia);
+
+    const dependientes = conexiones
+        .filter(x => x.origen === seleccion)
+        .map(x => x.destino);
+
+    const relacionados = new Set([
+        seleccion,
+        ...requisitos,
+        ...dependientes
+    ]);
+
+    document.querySelectorAll(".materia").forEach(tarjeta => {
+        const codigoTarjeta = tarjeta.dataset.codigo;
+
+        tarjeta.classList.toggle(
+            "seleccionada",
+            codigoTarjeta === seleccion
+        );
+
+        tarjeta.classList.toggle(
+            "atenuada",
+            !relacionados.has(codigoTarjeta)
+        );
+    });
+
+    document.getElementById("detalle")
+        .classList.add("visible");
+
+    document.getElementById("detalleNombre").textContent =
+        materia.nombre;
+
+    document.getElementById("detalleEstado").textContent =
+        "Código: " + materia.codigo +
+        " | Estado: " + materia.estado;
+
+    const contenedorRequisitos =
+        document.getElementById("detalleRequisitos");
+
+    contenedorRequisitos.innerHTML = "";
+
+    if (requisitos.length === 0) {
+        agregarTexto(
+            contenedorRequisitos,
+            "Esta materia no tiene prerrequisitos."
+        );
+    }
+
+    for (const requisito of requisitos) {
+        const clase = materiasPorCodigo[requisito];
+
+        agregarTexto(
+            contenedorRequisitos,
+            nombreMateria(requisito) +
+            " — " +
+            (clase ? clase.estado : "No encontrada")
+        );
+    }
+
+    const contenedorDependientes =
+        document.getElementById("detalleDependientes");
+
+    contenedorDependientes.innerHTML = "";
+
+    if (dependientes.length === 0) {
+        agregarTexto(
+            contenedorDependientes,
+            "Ninguna materia depende directamente de esta."
+        );
+    }
+
+    for (const codigoDependiente of dependientes) {
+        agregarTexto(
+            contenedorDependientes,
+            nombreMateria(codigoDependiente)
+        );
+    }
+
+    const boton = document.getElementById("botonAprobar");
+
+    boton.textContent =
+        estadoClase(materia) === "APROBADA"
+            ? "Desmarcar materia"
+            : "Marcar como aprobada";
+
+    dibujarConexiones();
+}
+
+function agregarTexto(contenedor, texto) {
+    const elemento = document.createElement("div");
+    elemento.className = "requisito";
+    elemento.textContent = texto;
+    contenedor.appendChild(elemento);
+}
+
+function limpiarSeleccion() {
+    seleccion = null;
+
+    document.querySelectorAll(".materia").forEach(tarjeta => {
+        tarjeta.classList.remove(
+            "seleccionada",
+            "atenuada"
+        );
+    });
+
+    document.getElementById("detalle")
+        .classList.remove("visible");
+
+    dibujarConexiones();
+}
+
+async function cambiarAprobacion() {
+    if (!seleccion) return;
+
+    const materia = materiasPorCodigo[seleccion];
+
+    if (!materia) return;
+
+    const aprobada = estadoClase(materia) !== "APROBADA";
+
+    try {
+        await solicitar("/aprobada", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                codigo: seleccion,
+                aprobada: aprobada
+            })
+        });
+
+        await cargarEstado();
+
+    } catch (error) {
+        mostrarMensaje(error.message, true);
+    }
+}
+
+document.getElementById("busqueda").addEventListener(
+    "input",
+    function () {
+        const texto = this.value.trim().toLowerCase();
+
+        document.querySelectorAll(".materia").forEach(tarjeta => {
+            const codigo = tarjeta.dataset.codigo;
+            const materia = materiasPorCodigo[codigo];
+
+            const coincide =
+                codigo.toLowerCase().includes(texto) ||
+                materia.nombre.toLowerCase().includes(texto);
+
+            tarjeta.style.display = coincide ? "" : "none";
+        });
+
+        requestAnimationFrame(dibujarConexiones);
+    }
+);
+
+function exportarPDF() {
+    const url = API + "/informe/pdf";
+
+    // Descarga el informe generado por Flask.
+    // El proxy de Go Live debe redirigir /api al puerto 5000.
+    window.location.href = url;
+}
+
+window.addEventListener("resize", dibujarConexiones);
+
+cargarEstado();
+</script>
+
+</body>
+</html>
