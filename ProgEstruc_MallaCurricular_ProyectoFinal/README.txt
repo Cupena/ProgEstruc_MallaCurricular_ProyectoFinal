@@ -1,1 +1,1 @@
-#Este es un proyecto universitario. Creacion de README
+#Este es un proyecto universitario. Creación de README
