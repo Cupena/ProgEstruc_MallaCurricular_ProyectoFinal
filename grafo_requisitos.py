@@ -4,7 +4,7 @@ Cada materia es un vértice, y una arista A -> B indica que A
 es requisito de B. Las listas de adyacencia crecen al añadir materias.
 """
 
-
+"""Relaciones entre materias representadas mediante grafos"""
 def crear_grafo(cursos):
     grafo = {'adyacencia': {}, 'requisitos': {}, 'materias': {}}
     for materia in cursos:
@@ -49,7 +49,7 @@ def materias_disponibles(grafo, aprobadas):
     return [clave for clave in grafo['materias']
             if clave not in aprobadas and not requisitos_pendientes(grafo, clave, aprobadas)]
 
-
+"""Adyacencia"""
 def dependientes_directas(grafo, materia):
     return list(grafo['adyacencia'].get(materia, []))
 
