@@ -5,6 +5,7 @@ from pathlib import Path
 from threading import Lock
 from wsgiref.simple_server import make_server
 from academico import evaluar, alternar_cursada
+from faq import listar_preguntas, buscar_preguntas, responder_faq, responder_lote
 from grafo_requisitos import crear_grafo, ruta_requisitos
 from cola_enlazada import recorrido_bfs
 
@@ -54,6 +55,9 @@ def aplicacion(environ, start_response):
     origin = environ.get('HTTP_ORIGIN')
     if metodo == 'OPTIONS':
         return responder(start_response, '200 OK', {}, origin)
+    if metodo == 'GET' and ruta == '/api/faq':
+        return responder(start_response, '200 OK',
+                         {'preguntas': listar_preguntas()}, origin)
     if metodo == 'GET':
         if ruta == '/api/salud':
             return responder(start_response, '200 OK', {'ok': True, 'servidor': 'Python sin dependencias',
@@ -61,7 +65,7 @@ def aplicacion(environ, start_response):
         if ruta == '/api/estado':
             return responder(start_response, '200 OK', {'state': load_state()}, origin)
         return responder(start_response, '404 Not Found', {'error': 'Ruta no encontrada'}, origin)
-    if metodo != 'POST' or ruta not in ('/api/sincronizar', '/api/evaluar', '/api/alternar-materia', '/api/grafo'):
+    if metodo != 'POST' or ruta not in ('/api/sincronizar', '/api/evaluar', '/api/alternar-materia', '/api/grafo', '/api/faq'):
         return responder(start_response, '404 Not Found', {'error': 'Ruta no encontrada'}, origin)
     try:
         size = int(environ.get('CONTENT_LENGTH') or '0')
@@ -70,7 +74,29 @@ def aplicacion(environ, start_response):
         data = json.loads(environ['wsgi.input'].read(size))
         if not isinstance(data, dict):
             raise ValueError('Se requiere un objeto JSON')
-        if ruta == '/api/alternar-materia':
+        if ruta == '/api/faq':
+            state = data.get('state')
+            ci = int(data.get('career', 0))
+
+            if state is None:
+                state = load_state() or {}
+
+            if not isinstance(state, dict):
+                raise ValueError('Estado academico invalido')
+
+            if 'buscar' in data:
+                result = {'preguntas': buscar_preguntas(data['buscar'])}
+            elif 'preguntas' in data:
+                result = {'respuestas': responder_lote(
+                    state, ci, data['preguntas']
+                )}
+            else:
+                result = responder_faq(
+                    state, ci,
+                    data.get('pregunta'),
+                    data.get('materia')
+                )
+        elif ruta == '/api/alternar-materia':
             state = data.get('state')
             key = data.get('key')
             ci = int(data.get('career', 0))
