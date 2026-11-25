@@ -57,3 +57,78 @@ python3 servidor.py
 Después abre `index.html` con la extensión **Go Live** de VS Code. No se necesita `pip install`.
 
 > Nota: estas modificaciones incorporan las dos estructuras al backend; no representan una solución al problema visual de la pantalla de carga, que quedó fuera del alcance de este cambio.
+
+## Estructuras adicionales
+
+### Pila dinamica enlazada (LIFO)
+
+Modulo: pila_enlazada.py.
+
+- Nodos enlazados mediante diccionarios.
+- Insercion y extraccion en la cima.
+- Operaciones principales O(1).
+- Recorrido completo O(n).
+- Aplicacion: procesamiento inverso de consultas FAQ.
+
+### Ampliacion del grafo dirigido
+
+Modulo: grafo_requisitos.py.
+
+- Deteccion de ciclos mediante DFS.
+- Analisis de dependencias transitivas.
+- Calculo del impacto academico.
+- Validacion de requisitos inexistentes.
+- Ordenamiento topologico mediante cola FIFO.
+- Recorridos del grafo: O(V + E).
+
+### Monticulo maximo
+
+Modulo: monticulo_prioridad.py.
+
+- Representacion mediante una lista dinamica.
+- Insercion O(log n) amortizada.
+- Extraccion maxima O(log n).
+- Consulta maxima O(1).
+- Priorizacion basada en dependencias academicas.
+- El calculo de impacto requiere recorrer el grafo.
+
+### FAQ academico
+
+Modulo: faq.py.
+
+- Catalogo de preguntas frecuentes.
+- Busqueda normalizada.
+- Respuestas generadas con datos academicos.
+- Integracion de pila, grafo, cola y monticulo.
+
+API:
+
+- GET /api/faq
+- POST /api/faq
+
+### Validaciones y diagnostico
+
+Modulo: validaciones.py.
+
+- Validacion de notas entre 0 y 100.
+- Validacion de creditos y semestres.
+- Deteccion de materias duplicadas.
+- Revision de prerrequisitos.
+- Diagnostico del estado academico.
+
+API:
+
+- GET /api/diagnostico
+
+El diagnostico es de consulta y no modifica la base de datos.
+
+### Pruebas automatizadas
+
+Ejecutar desde la carpeta principal:
+
+    py -B -m tests.test_estructuras
+
+Las pruebas utilizan datos ficticios y no modifican la base
+de datos ni los registros academicos del estudiante.
+
+No se requieren dependencias externas.

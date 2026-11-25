@@ -5,6 +5,7 @@ from pathlib import Path
 from threading import Lock
 from wsgiref.simple_server import make_server
 from academico import evaluar, alternar_cursada
+from validaciones import diagnosticar_estado
 from faq import listar_preguntas, buscar_preguntas, responder_faq, responder_lote
 from grafo_requisitos import crear_grafo, ruta_requisitos
 from cola_enlazada import recorrido_bfs
@@ -55,6 +56,11 @@ def aplicacion(environ, start_response):
     origin = environ.get('HTTP_ORIGIN')
     if metodo == 'OPTIONS':
         return responder(start_response, '200 OK', {}, origin)
+    if metodo == 'GET' and ruta == '/api/diagnostico':
+        return responder(
+            start_response, '200 OK',
+            diagnosticar_estado(load_state() or {}), origin
+        )
     if metodo == 'GET' and ruta == '/api/faq':
         return responder(start_response, '200 OK',
                          {'preguntas': listar_preguntas()}, origin)
