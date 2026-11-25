@@ -13,7 +13,7 @@
     latest = null;
     try {
       const response = await fetch('http://127.0.0.1:5000/api/sincronizar', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(snapshot)
       });
       if (!response.ok) throw new Error('Servidor académico ' + response.status);
