@@ -75,13 +75,15 @@ def equivalencias(state, key, ci, unique_name=False):
             refs.append((other, match))
     return refs
 
+"""Clasificacion de las clases segun su estado"""
 
+#El estudiante ya curso la asignatura, cumpliendo con los requisitos establecidos por la UAM para aprobar
 def cursada(state, records, key, ci):
     if records[ci]['taken'].get(key):
         return True
     return any(other != ci and bool(records[other]['taken'].get(course.get('key'))) for other, course in equivalencias(state, key, ci))
 
-
+#Para poder clasificar la asignaturas del pensum
 def estado(state, records, course, ci):
     if cursada(state, records, course.get('key'), ci):
         return 'taken'
@@ -125,7 +127,7 @@ def nota(partials, history=None):
             'convocatoriaMin': CONVOCATORIA, 'isFinal': count == 3 or from_history,
             'fromHistory': from_history, 'history': history}
 
-
+#Esrablece los parametros para la clasificacion del estado de las asignaturas
 def evaluar(state):
     records = registros(state)
     statuses, grades, recommendations, statistics = {}, {}, {}, {}
