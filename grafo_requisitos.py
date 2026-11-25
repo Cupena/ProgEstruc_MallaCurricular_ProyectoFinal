@@ -65,3 +65,5 @@ def ruta_requisitos(grafo, materia, visitados=None):
             pendientes.append(requisito)
             pendientes.extend(ruta_requisitos(grafo, requisito, visitados))
     return pendientes
+
+#Despliegue
