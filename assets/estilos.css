@@ -5159,3 +5159,40 @@ body#raAppTheme.ra-theme-v2[data-ra-mode="dark"] .route-theme-toggle[aria-presse
 @media (max-width: 560px) {
   .course-folder-grid { grid-template-columns: minmax(0, 1fr); }
 }
+
+
+/* ===== Malla curricular horizontal, modificación aislada =====
+   La aplicación y sus scripts originales permanecen intactos. */
+body#raAppTheme .sem-grid.curriculum-grid,
+body#raAppTheme.ra-theme-v2 .sem-grid.curriculum-grid {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: flex-start !important;
+  gap: 16px !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  padding: 4px 4px 20px !important;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  overscroll-behavior-x: contain;
+}
+body#raAppTheme .sem-grid.curriculum-grid > .sem,
+body#raAppTheme.ra-theme-v2 .sem-grid.curriculum-grid > .sem {
+  flex: 0 0 clamp(270px, 27vw, 340px) !important;
+  width: clamp(270px, 27vw, 340px) !important;
+  min-width: 270px !important;
+  max-width: 340px !important;
+  scroll-snap-align: start;
+}
+@media (max-width: 700px) {
+  body#raAppTheme .sem-grid.curriculum-grid > .sem,
+  body#raAppTheme.ra-theme-v2 .sem-grid.curriculum-grid > .sem {
+    flex-basis: min(84vw, 320px) !important;
+    width: min(84vw, 320px) !important;
+    min-width: 250px !important;
+  }
+}
