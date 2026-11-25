@@ -515,9 +515,6 @@ def dependientes(codigo):
     '''
     Ejecutamos el recorrido BFS (Breadth-First Search).
         BFS recorre el grafo por niveles, comenzando desde la materia indicada y buscando las materias que dependen directa o indirectamente de ella.
-    
-        Por ejemplo:
-            Si B necesita A y C necesita B, al consultar A también podremos encontrar C.
     '''
     return jsonify(
         materias=dependientes_bfs(g, codigo)
