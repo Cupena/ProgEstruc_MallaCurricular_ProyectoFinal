@@ -5,10 +5,76 @@ import re
 import secrets
 import sqlite3
 import time
+from threading import Lock
 from http.cookies import SimpleCookie
 
 SESSION_SECONDS = 7 * 24 * 3600
 ITERATIONS = 310_000
+
+# PILA DINÁMICA DE INICIOS DE SESIÓN (LIFO)
+# Nodos enlazados mediante diccionarios: no se definen clases.
+# Guarda únicamente metadatos de intentos; NUNCA contraseñas ni tokens.
+# Es un historial temporal en memoria, no reemplaza la base de datos.
+MAX_EVENTOS_LOGIN = 100
+PILA_LOGIN = {'cima': None, 'tamano': 0}
+PILA_LOCK = Lock()
+
+
+def apilar_login(pila, evento):
+    """Push: inserta un nodo en la cima en O(1)."""
+    pila['cima'] = {'valor': evento, 'siguiente': pila['cima']}
+    pila['tamano'] += 1
+    return pila['tamano']
+
+
+def desapilar_login(pila):
+    """Pop: retira el evento más reciente (LIFO), en O(1)."""
+    if pila['cima'] is None:
+        raise IndexError('La pila de inicios de sesión está vacía.')
+    nodo = pila['cima']
+    pila['cima'] = nodo['siguiente']
+    pila['tamano'] -= 1
+    return nodo['valor']
+
+
+def cima_login(pila):
+    """Peek: consulta la cima sin eliminarla."""
+    return pila['cima']['valor'] if pila['cima'] is not None else None
+
+
+def listar_login(pila, limite=10, usuario_id=None):
+    """Recorre la pila desde el intento más reciente, sin modificarla."""
+    actual = pila['cima']
+    resultado = []
+    while actual is not None and len(resultado) < limite:
+        dato = actual['valor']
+        if usuario_id is None or dato['usuario_id'] == usuario_id:
+            resultado.append(dict(dato))
+        actual = actual['siguiente']
+    return resultado
+
+
+def registrar_evento_login(usuario_id, accion, exitoso):
+    """Apila un evento de autenticación sin almacenar información secreta."""
+    evento = {'usuario_id': usuario_id, 'accion': accion,
+              'exitoso': bool(exitoso), 'fecha': int(time.time())}
+    with PILA_LOCK:
+        apilar_login(PILA_LOGIN, evento)
+        # Se conserva un historial acotado para no consumir memoria indefinidamente.
+        if PILA_LOGIN['tamano'] > MAX_EVENTOS_LOGIN:
+            actual = PILA_LOGIN['cima']
+            for _ in range(MAX_EVENTOS_LOGIN - 1):
+                actual = actual['siguiente']
+            actual['siguiente'] = None
+            PILA_LOGIN['tamano'] = MAX_EVENTOS_LOGIN
+    return evento
+
+
+def historial_login_usuario(usuario_id, limite=10):
+    """Devuelve los últimos eventos del usuario autenticado, en orden LIFO."""
+    limite = max(1, min(int(limite), 30))
+    with PILA_LOCK:
+        return listar_login(PILA_LOGIN, limite, usuario_id)
 
 
 def preparar_tablas(db):
@@ -61,7 +127,9 @@ def autenticar(db, correo, clave):
         raise ValueError('Utilizá tu correo institucional @uamv.edu.ni.')
     row = db.execute('SELECT id,nombre,correo,sal,clave_hash FROM usuarios WHERE correo=?', (correo,)).fetchone()
     if not row or not isinstance(clave, str) or not hmac.compare_digest(derivar_clave(clave, row[3]), row[4]):
+        registrar_evento_login(None, 'intento_fallido', False)
         raise ValueError('Correo o contraseña incorrectos.')
+    registrar_evento_login(row[0], 'inicio_sesion', True)
     return {'id': row[0], 'nombre': row[1], 'correo': row[2]}
 
 
@@ -93,9 +161,12 @@ def usuario_actual(db, environ):
 
 
 def cerrar_sesion(db, environ):
+    usuario = usuario_actual(db, environ)
     token = leer_cookie(environ)
     if token:
         db.execute('DELETE FROM sesiones WHERE token_hash=?', (hashlib.sha256(token.encode()).hexdigest(),))
+    if usuario:
+        registrar_evento_login(usuario['id'], 'cierre_sesion', True)
 
 
 def cookie_sesion(token, environ):
